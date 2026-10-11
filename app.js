@@ -15,14 +15,19 @@ const dejaVus = new Set(lire(CLE_VU, []));
 const nettoyer = h => { const d = document.createElement("div"); d.innerHTML = h || ""; return (d.textContent || "").replace(/\s+/g, " ").trim(); };
 const tronquer = (t, n) => t.length > n ? t.slice(0, n - 1).trimEnd() + "…" : t;
 
+function avecDelai(url, ms = 12000) {
+  const c = new AbortController(), t = setTimeout(() => c.abort(), ms);
+  return fetch(url, { signal: c.signal }).finally(() => clearTimeout(t));
+}
+
 async function lireFlux(src) {
   // 1) lecture directe (APK)
   try {
-    const r = await fetch(src.url);
+    const r = await avecDelai(src.url);
     if (r.ok) return analyserXml(await r.text(), src);
   } catch {}
   // 2) repli : rss2json
-  const r2 = await fetch("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(src.url));
+  const r2 = await avecDelai("https://api.rss2json.com/v1/api.json?rss_url=" + encodeURIComponent(src.url));
   const j = await r2.json();
   if (j.status !== "ok") throw new Error("flux indisponible");
   return j.items.map(i => creer(src, i.title, i.link, i.pubDate, i.description));
@@ -60,18 +65,25 @@ function dedoublonner(liste) {
 
 async function actualiser() {
   $("#etat").textContent = "Mise à jour…";
-  const resultats = await Promise.allSettled(SOURCES.map(lireFlux));
-  let tous = [], echecs = 0;
-  resultats.forEach((r, i) => {
-    if (r.status === "fulfilled") tous = tous.concat(r.value.slice(0, 15));
-    else echecs++;
-  });
+  // 5 flux en parallèle au maximum, pour ne pas saturer le service de repli
+  let tous = [], echecs = [], suivant = 0;
+  const ouvrier = async () => {
+    while (suivant < SOURCES.length) {
+      const src = SOURCES[suivant++];
+      try { tous = tous.concat((await lireFlux(src)).slice(0, 15)); }
+      catch { echecs.push(src.name); }
+    }
+  };
+  await Promise.all(Array.from({ length: 5 }, ouvrier));
   if (tous.length) {
     tous.sort((a, b) => b.date - a.date);
     articles = dedoublonner(tous);
     ecrire(CLE_CACHE, { date: Date.now(), items: articles });
+    $("#maj").textContent = "Dernière mise à jour : " + new Date().toLocaleString("fr-FR");
   }
-  $("#etat").textContent = echecs ? `${echecs} source(s) injoignable(s)` : "À jour";
+  const etat = $("#etat");
+  etat.textContent = echecs.length ? `${echecs.length} source(s) injoignable(s) — toucher pour la liste` : "À jour";
+  etat.onclick = () => { if (echecs.length) alert("Sources injoignables :\n\n" + echecs.join("\n")); };
   afficher();
 }
 
