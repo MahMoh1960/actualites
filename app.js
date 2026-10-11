@@ -46,7 +46,7 @@ function analyserXml(xml, src) {
 function creer(src, titre, lien, date, desc) {
   const d = new Date(date);
   return {
-    id: lien || titre, titre: nettoyer(titre), lien, theme: src.theme, source: src.name, lang: src.lang,
+    id: lien || titre, titre: nettoyer(titre), lien, theme: src.theme, source: src.name, lang: src.lang, etat: !!src.etat,
     date: isNaN(d) ? Date.now() : d.getTime(), extrait: tronquer(nettoyer(desc), 220)
   };
 }
@@ -107,7 +107,7 @@ function afficher() {
     const meta = document.createElement("div"); meta.className = "meta";
     const heure = new Date(a.date).toLocaleString("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" });
     const autres = a.autres?.length ? ` · aussi : ${[...new Set(a.autres)].join(", ")}` : "";
-    meta.textContent = `${a.source} · ${heure}${autres}`;
+    meta.textContent = `${a.source}${a.etat ? " (média d'État)" : ""} · ${heure}${autres}`;
     const etoile = document.createElement("button"); etoile.className = "etoile";
     etoile.textContent = favoris.has(a.id) ? "★" : "☆";
     etoile.onclick = () => { favoris.has(a.id) ? favoris.delete(a.id) : favoris.add(a.id); ecrire(CLE_FAV, [...favoris]); etoile.textContent = favoris.has(a.id) ? "★" : "☆"; };
