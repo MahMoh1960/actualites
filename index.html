@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#14213d">
+<title>Actualités du jour</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Actualités du jour</h1>
+  <div class="sub" id="maj">—</div>
+  <div class="tools">
+    <input id="q" type="search" placeholder="Rechercher un mot-clé…">
+    <select id="lang">
+      <option value="">Toutes langues</option>
+      <option value="fr">Français</option>
+      <option value="ar">العربية</option>
+      <option value="en">English</option>
+    </select>
+    <button id="refresh" title="Actualiser">↻</button>
+  </div>
+  <nav id="tabs"></nav>
+</header>
+<main id="liste"></main>
+<footer>
+  <button id="exp">Exporter en .txt</button>
+  <span id="etat"></span>
+</footer>
+<script src="sources.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
