@@ -25,7 +25,6 @@ const SOURCES = [
   { theme: "breaking", name: "France 24", lang: "fr", url: "https://www.france24.com/fr/rss" },
   { theme: "breaking", name: "Le Monde – Une", lang: "fr", url: "https://www.lemonde.fr/rss/une.xml" },
   { theme: "breaking", name: "BBC Arabic", lang: "ar", url: "https://feeds.bbci.co.uk/arabic/rss.xml" },
-  { theme: "breaking", name: "RFI (ar)", lang: "ar", url: "https://www.rfi.fr/ar/rss" },
   { theme: "breaking", name: "Hespress", lang: "ar", url: "https://www.hespress.com/feed" },
   { theme: "breaking", name: "Hespress FR", lang: "fr", url: "https://fr.hespress.com/feed" },
 
