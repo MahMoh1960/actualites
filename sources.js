@@ -2,6 +2,10 @@
 // Thèmes par ordre d'importance : breaking, politique, economie, juridique, social, science
 // Mention « vérifié » = flux dont l'existence a été contrôlée ; les autres sont à confirmer
 // au premier test (l'application indique les sources injoignables).
+// Adresse du relais Cloudflare (étape suivante). Exemple : "https://actualites.monnom.workers.dev/"
+// Laisser vide tant que le relais n'est pas créé.
+const PROXY_URL = "https://relais-actualites.mahfoud1960.workers.dev/";
+
 const THEMES = [
   { id: "breaking", label: "À la une" },
   { id: "politique", label: "Politique" },

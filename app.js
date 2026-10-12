@@ -21,6 +21,12 @@ function avecDelai(url, ms = 12000) {
 }
 
 async function lireFlux(src) {
+  // 0) relais Cloudflare, s'il est configuré (PROXY_URL dans sources.js)
+  if (typeof PROXY_URL === "string" && PROXY_URL) {
+    const r = await avecDelai(PROXY_URL + "?url=" + encodeURIComponent(src.url), 15000);
+    if (!r.ok) throw new Error("relais : " + r.status);
+    return analyserXml(await r.text(), src);
+  }
   // 1) lecture directe (APK)
   try {
     const r = await avecDelai(src.url);
