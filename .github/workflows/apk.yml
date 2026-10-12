@@ -23,12 +23,9 @@ jobs:
           npm install @capacitor/core@7 @capacitor/cli@7 @capacitor/android@7
           npx cap add android
           npx cap sync android
-      - name: Compiler
-        run: |
-          cd android
-          chmod +x gradlew
-          ./gradlew assembleDebug
-      - uses: actions/upload-artifact@v4
-        with:
-          name: actualites-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          R=android/app/src/main/res
+          rm -rf $R/mipmap-anydpi-v26
+          for p in "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
+            set -- $p
+            convert icon.png -resize ${2}x${2} $R/mipmap-$1/ic_launcher.png
+            convert icon.png -res
