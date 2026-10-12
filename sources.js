@@ -50,6 +50,12 @@ const SOURCES = [
   { theme: "juridique", name: "Le Monde – Justice", lang: "fr", url: "https://www.lemonde.fr/justice/rss_full.xml" },
   { theme: "juridique", name: "ONU Info – Droit et prévention du crime", lang: "fr", url: "https://news.un.org/feed/subscribe/fr/news/topic/law-and-crime-prevention/feed/rss.xml" },
 
+  { theme: "juridique", name: "JURIST", lang: "en", url: "https://www.jurist.org/news/feed/" },
+  { theme: "juridique", name: "Just Security", lang: "en", url: "https://www.justsecurity.org/feed/" },
+  { theme: "juridique", name: "Verdict (Justia)", lang: "en", url: "https://verdict.justia.com/feed" },
+  { theme: "juridique", name: "Actu-Juridique", lang: "fr", url: "https://www.actu-juridique.fr/feed/" },
+  { theme: "juridique", name: "Human Rights Watch", lang: "en", url: "https://www.hrw.org/rss/news" },
+
   // --- Social ---
   { theme: "social", name: "Le Monde – Société", lang: "fr", url: "https://www.lemonde.fr/societe/rss_full.xml" },
   { theme: "social", name: "ONU Info – Droits humains", lang: "fr", url: "https://news.un.org/feed/subscribe/fr/news/topic/human-rights/feed/rss.xml" },

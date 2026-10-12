@@ -141,6 +141,45 @@ function ajouterResume(el, a) {
   zone.append(btn, err);
 }
 
+// ----- Synthèse IA de la rubrique (10 premiers titres) -----
+const syntheses = {};
+function ajouterSynthese(zone, items, theme, lang, label) {
+  if (typeof PROXY_URL !== "string" || !PROXY_URL || !items.length) return;
+  const cle = theme + "|" + lang + "|" + items[0].id;
+  const montrer = txt => {
+    zone.innerHTML = "";
+    const box = document.createElement("div");
+    box.className = "ia" + (lang === "ar" ? " ar" : "");
+    box.textContent = txt;
+    const note = document.createElement("div");
+    note.className = "iamention";
+    note.textContent = "Synthèse automatique (IA) d'après les titres de la rubrique — peut contenir des erreurs.";
+    zone.append(box, note);
+  };
+  if (syntheses[cle]) { montrer(syntheses[cle]); return; }
+  const btn = document.createElement("button");
+  btn.className = "resbtn";
+  btn.textContent = "✨ Synthèse de la rubrique";
+  const err = document.createElement("div");
+  err.className = "iaerr";
+  btn.onclick = async () => {
+    btn.disabled = true; btn.textContent = "Synthèse en cours…"; err.textContent = "";
+    const c = new AbortController(), t = setTimeout(() => c.abort(), 40000);
+    try {
+      const q = new URLSearchParams({ m: "1", t: items.map(x => "- " + x.titre).join("\n"), l: lang, s: label, e: "" });
+      const r = await fetch(PROXY_URL + "resume?" + q.toString(), { signal: c.signal });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.resume) throw new Error(j.erreur || ("code " + r.status));
+      syntheses[cle] = j.resume;
+      montrer(j.resume);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = "✨ Réessayer la synthèse";
+      err.textContent = "Synthèse indisponible : " + (e.name === "AbortError" ? "délai dépassé" : e.message);
+    } finally { clearTimeout(t); }
+  };
+  zone.append(btn, err);
+}
+
 function afficher() {
   const q = $("#q").value.trim().toLowerCase(), lg = $("#lang").value;
   const unJour = Date.now() - 36 * 3600e3;
@@ -150,6 +189,10 @@ function afficher() {
   const zone = $("#liste");
   zone.innerHTML = "";
   if (!liste.length) { zone.innerHTML = '<div class="vide">Aucun article. Appuyez sur ↻ pour actualiser.</div>'; return; }
+  const zs = document.createElement("div");
+  const th = THEMES.find(x => x.id === themeActif);
+  ajouterSynthese(zs, liste.slice(0, 10), themeActif, lg || "fr", th ? th.label : "Favoris");
+  zone.appendChild(zs);
   for (const a of liste.slice(0, 80)) {
     const el = document.createElement("article");
     if (!dejaVus.has(a.id) && a.date > unJour) el.className = "nouveau";
