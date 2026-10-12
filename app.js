@@ -24,8 +24,10 @@ async function lireFlux(src) {
   // 0) relais Cloudflare, s'il est configuré (PROXY_URL dans sources.js)
   if (typeof PROXY_URL === "string" && PROXY_URL) {
     const r = await avecDelai(PROXY_URL + "?url=" + encodeURIComponent(src.url), 15000);
-    if (!r.ok) throw new Error("relais : " + r.status);
-    return analyserXml(await r.text(), src);
+    if (!r.ok) throw new Error("refusé par le site (code " + r.status + ")");
+    const items = analyserXml(await r.text(), src);
+    if (!items.length) throw new Error("réponse vide ou page non XML (adresse du flux à revoir)");
+    return items;
   }
   // 1) lecture directe (APK)
   try {
@@ -77,7 +79,7 @@ async function actualiser() {
     while (suivant < SOURCES.length) {
       const src = SOURCES[suivant++];
       try { tous = tous.concat((await lireFlux(src)).slice(0, 15)); }
-      catch { echecs.push(src.name); }
+      catch (e) { echecs.push(src.name + " — " + (e && e.name === "AbortError" ? "délai dépassé" : (e && e.message) || "erreur")); }
     }
   };
   await Promise.all(Array.from({ length: 5 }, ouvrier));
