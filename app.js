@@ -3,11 +3,12 @@
 // Dans l'APK (Capacitor), la lecture directe des flux fonctionne ; en page web simple,
 // on bascule sur rss2json (gratuit, limité) faute d'autorisation CORS des médias.
 const $ = s => document.querySelector(s);
-const CLE_CACHE = "actu_cache_v1", CLE_FAV = "actu_fav_v1", CLE_VU = "actu_vu_v1";
+const CLE_CACHE = "actu_cache_v1", CLE_FAV = "actu_fav_v1", CLE_VU = "actu_vu_v1", CLE_TL = "actu_tlang_v1";
 const lire = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
 const ecrire = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
 
 let themeActif = "breaking";
+let langTrad = lire(CLE_TL, "fr");
 let articles = lire(CLE_CACHE, { date: null, items: [] }).items;
 let favoris = new Set(lire(CLE_FAV, []));
 const dejaVus = new Set(lire(CLE_VU, []));
@@ -141,6 +142,32 @@ function ajouterResume(el, a) {
   zone.append(btn, err);
 }
 
+// ----- Traduction (Google Traduction, ouverte dans le navigateur) -----
+function ouvrirLien(url) {
+  const l = document.createElement("a");
+  l.href = url; l.target = "_blank"; l.rel = "noopener";
+  document.body.appendChild(l); l.click(); l.remove();
+}
+function ajouterTraduction(el, a) {
+  if (!a.lien || a.lang === langTrad) return; // déjà dans la langue choisie
+  const barre = document.createElement("div");
+  barre.className = "tradbar";
+  const bArt = document.createElement("button");
+  bArt.className = "resbtn";
+  bArt.textContent = "🌐 Traduire l'article";
+  bArt.onclick = () => ouvrirLien("https://translate.google.com/translate?sl=auto&tl=" + langTrad + "&u=" + encodeURIComponent(a.lien));
+  const bTxt = document.createElement("button");
+  bTxt.className = "resbtn";
+  bTxt.textContent = "Aa Traduire le texte";
+  bTxt.onclick = () => {
+    // titre + extrait (+ résumé IA s'il a été généré)
+    const texte = [a.titre, a.extrait, resumes[a.id]].filter(Boolean).join("\n\n");
+    ouvrirLien("https://translate.google.com/?sl=auto&tl=" + langTrad + "&op=translate&text=" + encodeURIComponent(texte));
+  };
+  barre.append(bArt, bTxt);
+  el.appendChild(barre);
+}
+
 // ----- Synthèse IA de la rubrique (10 premiers titres) -----
 const syntheses = {};
 function ajouterSynthese(zone, items, theme, lang, label) {
@@ -212,6 +239,7 @@ function afficher() {
     el.append(h, meta);
     if (a.extrait) { const p = document.createElement("p"); p.className = "res" + (a.lang === "ar" ? " ar" : ""); p.textContent = a.extrait; el.appendChild(p); }
     ajouterResume(el, a);
+    ajouterTraduction(el, a);
     lien.addEventListener("click", () => { dejaVus.add(a.id); ecrire(CLE_VU, [...dejaVus].slice(-1000)); el.classList.remove("nouveau"); });
     zone.appendChild(el);
   }
@@ -235,6 +263,8 @@ function init() {
     nav.appendChild(b);
   });
   $("#q").oninput = afficher; $("#lang").onchange = afficher;
+  $("#tlang").value = langTrad;
+  $("#tlang").onchange = () => { langTrad = $("#tlang").value; ecrire(CLE_TL, langTrad); afficher(); };
   $("#refresh").onclick = actualiser; $("#exp").onclick = exporter;
   const c = lire(CLE_CACHE, { date: null });
   $("#maj").textContent = c.date ? "Dernière mise à jour : " + new Date(c.date).toLocaleString("fr-FR") : "Pas encore de données";
