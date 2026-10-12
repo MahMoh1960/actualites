@@ -95,6 +95,52 @@ async function actualiser() {
   afficher();
 }
 
+// ----- Résumé IA à la demande (relais Cloudflare, route /resume) -----
+const CLE_RES = "actu_res_v1";
+let resumes = lire(CLE_RES, {});
+
+function ajouterResume(el, a) {
+  if (typeof PROXY_URL !== "string" || !PROXY_URL) return;
+  const zone = document.createElement("div");
+  const montrer = txt => {
+    zone.innerHTML = "";
+    const box = document.createElement("div");
+    box.className = "ia" + (a.lang === "ar" ? " ar" : "");
+    box.textContent = txt;
+    const note = document.createElement("div");
+    note.className = "iamention";
+    note.textContent = "Résumé automatique (IA) d'après le titre et l'extrait — peut contenir des erreurs. Source : " + a.source;
+    zone.append(box, note);
+  };
+  el.appendChild(zone);
+  if (resumes[a.id]) { montrer(resumes[a.id]); return; }
+
+  const btn = document.createElement("button");
+  btn.className = "resbtn";
+  btn.textContent = "✨ Résumé IA";
+  const err = document.createElement("div");
+  err.className = "iaerr";
+  btn.onclick = async () => {
+    btn.disabled = true; btn.textContent = "Résumé en cours…"; err.textContent = "";
+    const c = new AbortController(), t = setTimeout(() => c.abort(), 30000);
+    try {
+      const q = new URLSearchParams({ t: a.titre, e: a.extrait, l: a.lang, s: a.source });
+      const r = await fetch(PROXY_URL + "resume?" + q.toString(), { signal: c.signal });
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok || !j.resume) throw new Error(j.erreur || ("code " + r.status));
+      resumes[a.id] = j.resume;
+      const cles = Object.keys(resumes);
+      if (cles.length > 300) cles.slice(0, cles.length - 300).forEach(k => delete resumes[k]);
+      ecrire(CLE_RES, resumes);
+      montrer(j.resume);
+    } catch (e) {
+      btn.disabled = false; btn.textContent = "✨ Réessayer le résumé";
+      err.textContent = "Résumé indisponible : " + (e.name === "AbortError" ? "délai dépassé" : e.message);
+    } finally { clearTimeout(t); }
+  };
+  zone.append(btn, err);
+}
+
 function afficher() {
   const q = $("#q").value.trim().toLowerCase(), lg = $("#lang").value;
   const unJour = Date.now() - 36 * 3600e3;
@@ -122,6 +168,7 @@ function afficher() {
     meta.appendChild(etoile);
     el.append(h, meta);
     if (a.extrait) { const p = document.createElement("p"); p.className = "res" + (a.lang === "ar" ? " ar" : ""); p.textContent = a.extrait; el.appendChild(p); }
+    ajouterResume(el, a);
     lien.addEventListener("click", () => { dejaVus.add(a.id); ecrire(CLE_VU, [...dejaVus].slice(-1000)); el.classList.remove("nouveau"); });
     zone.appendChild(el);
   }
