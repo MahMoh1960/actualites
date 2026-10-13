@@ -28,4 +28,14 @@ jobs:
           for p in "mdpi 48" "hdpi 72" "xhdpi 96" "xxhdpi 144" "xxxhdpi 192"; do
             set -- $p
             convert icon.png -resize ${2}x${2} $R/mipmap-$1/ic_launcher.png
-            convert icon.png -res
+            convert icon.png -resize ${2}x${2} $R/mipmap-$1/ic_launcher_round.png
+          done
+      - name: Compiler l'APK
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: actualites-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
